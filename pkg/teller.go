@@ -438,6 +438,12 @@ func (tl *Teller) CollectFromProvider(pname string) ([]core.EnvEntry, error) {
 				//nolint
 				updateParams(ent, &v, pname)
 				entries = append(entries, *ent)
+				// Remove the initial unmapped env key in entries
+				for i, e := range entries {
+					if e.Key == v.Field {
+						entries = append(entries[:i], entries[i+1:]...)
+					}
+				}
 			}
 		}
 	} else {
