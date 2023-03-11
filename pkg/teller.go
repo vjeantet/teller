@@ -541,6 +541,15 @@ func (tl *Teller) GetProviderByName(pname string) (*MappingConfig, core.Provider
 }
 
 func (tl *Teller) Put(kvmap map[string]string, providerNames []string, sync bool, directPath string) error {
+	// When no provider set by user AND only one exists in teller.yml, use it.
+	if len(providerNames) == 0 {
+		if len(tl.Config.Providers) == 1 {
+			for k, _ := range tl.Config.Providers {
+				providerNames = append(providerNames, k)
+			}
+		}
+	}
+
 	for _, pname := range providerNames {
 		pcfg, provider, err := tl.GetProviderByName(pname)
 		if err != nil {

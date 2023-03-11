@@ -349,7 +349,7 @@ A few notes:
 
 - Values are key-value pair in the format: `key=value` and you can specify multiple pairs at once
 - When you're specifying a literal sensitive value, make sure to use an ENV variable so that nothing sensitive is recorded in your history
-- The flag `--providers` lets you push to one or more providers at once
+- The flag `--providers` lets you push to one or more providers at once, you can omit it if you only have one provider set in your configuration.
 - `FOO_BAR` must be a mapped key in your configuration for each provider you want to update
 
 Sometimes you don't have a mapped key in your configuration file and want to perform an ad-hoc write, you can do that with `--path`:
