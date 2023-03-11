@@ -2,14 +2,14 @@ package main
 
 import (
 	"fmt"
-	"io"
-	"os"
-
 	"github.com/alecthomas/kong"
 	"github.com/spectralops/teller/pkg"
 	"github.com/spectralops/teller/pkg/logging"
 	"github.com/spectralops/teller/pkg/providers"
 	"github.com/spectralops/teller/pkg/utils"
+	"io"
+	"os"
+	"path/filepath"
 )
 
 var CLI struct {
@@ -98,7 +98,7 @@ var (
 	defaultLogLevel = "error"
 )
 
-//nolint
+// nolint
 func main() {
 	ctx := kong.Parse(&CLI)
 
@@ -131,18 +131,16 @@ func main() {
 		os.Exit(0)
 	}
 
-	//
-	// load or create new file
-	//
-	telleryml := ".teller.yml"
-	if CLI.Config != "" {
-		telleryml = CLI.Config
-	}
-
 	if ctx.Command() == "new" {
 		teller := pkg.Teller{
 			Porcelain: &pkg.Porcelain{Out: os.Stderr},
 			Logger:    logger,
+		}
+
+		// Use the specified config file if provided, otherwise use the .teller.yml file in current directory
+		telleryml := ".teller.yml"
+		if CLI.Config != "" {
+			telleryml = CLI.Config
 		}
 		if _, err := os.Stat(telleryml); err == nil && !teller.Porcelain.AskForConfirmation(fmt.Sprintf("The file %s already exists. Do you want to override the configuration with new settings?", telleryml)) {
 			os.Exit(0)
@@ -155,10 +153,34 @@ func main() {
 		os.Exit(0)
 	}
 
+	// Find the config file, by priority:
+	//	1. specified config file,
+	//	2. .teller.yml in current directory,
+	//	3. .teller.yml in home directory
+	telleryml := ".teller.yml"
+	if CLI.Config != "" {
+		telleryml = CLI.Config
+	} else { // Test current directory then home directory
+		// If .teller.yml does not exist in current directory, try to find it in home directory
+		if _, err := os.Stat(telleryml); os.IsNotExist(err) {
+			home, err := os.UserHomeDir()
+			if err != nil {
+				logger.WithError(err).Fatal("could not find home directory")
+			}
+			telleryml = filepath.Join(home, ".teller.yml")
+			if _, err := os.Stat(telleryml); os.IsNotExist(err) {
+				logger.WithField("file", ".teller.yml").Fatal("could not find configuration file, in current " +
+					"directory or home directory.  Run 'teller new' to create a new configuration file or specify a config file with --config flag")
+			}
+		} else { // Use the existing config file in current directory
+			telleryml = ".teller.yml"
+		}
+	}
+
+	logger.Debug("Using config file: %s", telleryml)
 	tlrfile, err := pkg.NewTellerFile(telleryml)
 	if err != nil {
 		logger.WithError(err).WithField("file", telleryml).Fatal("could not read file")
-
 	}
 
 	teller := pkg.NewTeller(tlrfile, CLI.Run.Cmd, CLI.Run.Redact, logger)

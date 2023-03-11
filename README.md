@@ -65,7 +65,12 @@ For more, check our [setup teller action](https://github.com/marketplace/actions
 
 ## Create your configuration
 
-Run `teller new` and follow the wizard, pick the providers you like and it will generate a `.teller.yml` for you.
+Teller use the configuration file specified with `-c` or `--config` option on command line.
+When no configuration file is specified, Teller will look for a `.teller.yml` configuration file in the following locations:
+1. in the current directory.
+2. in your home directory.
+
+Run `teller new` to create a configuration file and follow the wizard, pick the providers you like and it will generate a `.teller.yml` for you.
 
 Alternatively, you can use the following minimal template or [view a full example](.teller.example.yml):
 
